@@ -1,17 +1,19 @@
 import socket                                                   # Used for TCP/IP communication
+#import traceback
+
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)		# Initializing client connection
 
 class KUKA(object):
 
-    def __init__(self, TCP_IP):
+    def __init__(self, TCP_IP, TCP_PORT):
         try: 
-            client.connect((TCP_IP, 7000))                      # Open socket. kukavarproxy actively listens on TCP port 7000
+            client.connect((TCP_IP, TCP_PORT))                      # Open socket. kukavarproxy actively listens on TCP port 7000
         except: 
             self.error_list(1)
 
 
     def send (self, var, val, msgID):
-    	"""
+        """
         kukavarproxy message format is 
         msg ID in HEX                       2 bytes
         msg length in HEX                   2 bytes
@@ -60,19 +62,17 @@ class KUKA(object):
         Not sure if the following bytes contain the client number, or they're just check bytes. I'll check later.
         """
         try:
-            # Python 2.x
-            lsb = (int (str(msg[5]).encode('hex'),16))
-            msb = (int (str(msg[6]).encode('hex'),16))
-            lenValue = (lsb <<8 | msb)
-            return msg [7: 7+lenValue]
+            # # Python 2.x
+            # lsb = (int (str(msg[5]).encode('hex'),16))
+            # msb = (int (str(msg[6]).encode('hex'),16))
+            # lenValue = (lsb <<8 | msb)
+            # return msg [7: 7+lenValue]
 
-            """
             # Python 3.x
             lsb = int( msg[5])
             msb = int( msg[6])
             lenValue = (lsb <<8 | msb)
             return str(msg [7: 7+lenValue],'utf-8')  
-            """
 
         except:
             self.error_list(2)
@@ -97,16 +97,17 @@ class KUKA(object):
 
 
     def error_list (self, ID):
+        # traceback.print_tb()
         if ID == 1:
             print ("Network Error (tcp_error)")
             print ("    Check your KRC's IP address on the network, and make sure kukaproxyvar is running.")
             self.disconnect()
-            raise SystemExit
+            raise SystemExit("Network Error (tcp_error). Check your KRC's IP address on the network, and make sure kukaproxyvar is running.")
         elif ID == 2:
             print ("Python Error.")
             print ("    Check the code and uncomment the lines related to your python version.")
             self.disconnect()
-            raise SystemExit
+            raise SystemExit("Python Error. Check the code and uncomment the lines related to your python version.")
         elif ID == 3:
             print ("Error in write() statement.")
             print ("    Variable value is not defined.")
